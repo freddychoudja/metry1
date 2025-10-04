@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 220 25% 97%;
+    --foreground: 220 40% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 12%;
+
+    /* Sky blue primary - atmospheric theme */
+    --primary: 210 85% 55%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 210 90% 65%;
+
+    /* Deep space secondary */
+    --secondary: 240 50% 25%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 220 20% 92%;
+    --muted-foreground: 220 15% 50%;
+
+    /* Alert colors */
+    --accent: 35 95% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 160 70% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 90%;
+    --ring: 210 85% 55%;
+
+    --radius: 0.75rem;
+    
+    /* Custom atmospheric gradients */
+    --gradient-sky: linear-gradient(135deg, hsl(210 85% 55%) 0%, hsl(240 80% 60%) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(35 95% 60%) 0%, hsl(15 90% 55%) 100%);
+    --gradient-night: linear-gradient(135deg, hsl(240 50% 25%) 0%, hsl(260 60% 35%) 100%);
+    --gradient-aurora: linear-gradient(135deg, hsl(210 85% 55%) 0%, hsl(160 70% 45%) 50%, hsl(280 70% 60%) 100%);
+    
+    /* Shadows with atmospheric feel */
+    --shadow-soft: 0 4px 24px -2px hsl(220 25% 50% / 0.08);
+    --shadow-medium: 0 8px 32px -4px hsl(220 25% 50% / 0.12);
+    --shadow-glow: 0 0 40px hsl(210 85% 55% / 0.3);
+    
+    /* Smooth transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 40% 8%;
+    --foreground: 220 20% 95%;
+
+    --card: 220 35% 12%;
+    --card-foreground: 220 20% 95%;
+
+    --popover: 220 35% 12%;
+    --popover-foreground: 220 20% 95%;
+
+    --primary: 210 85% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 210 90% 70%;
+
+    --secondary: 240 50% 20%;
+    --secondary-foreground: 220 20% 95%;
+
+    --muted: 220 30% 18%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 35 95% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 160 70% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 30% 20%;
+    --input: 220 30% 18%;
+    --ring: 210 85% 60%;
+    
+    --gradient-sky: linear-gradient(135deg, hsl(210 85% 50%) 0%, hsl(240 80% 55%) 100%);
+    --gradient-sunset: linear-gradient(135deg, hsl(35 95% 55%) 0%, hsl(15 90% 50%) 100%);
+    --gradient-night: linear-gradient(135deg, hsl(240 50% 20%) 0%, hsl(260 60% 30%) 100%);
+    --gradient-aurora: linear-gradient(135deg, hsl(210 85% 50%) 0%, hsl(160 70% 40%) 50%, hsl(280 70% 55%) 100%);
+    
+    --shadow-soft: 0 4px 24px -2px hsl(0 0% 0% / 0.2);
+    --shadow-medium: 0 8px 32px -4px hsl(0 0% 0% / 0.3);
+    --shadow-glow: 0 0 40px hsl(210 85% 60% / 0.4);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
