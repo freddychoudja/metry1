@@ -229,7 +229,3 @@ Pour contribuer à ce projet :
 ## 📄 Licence
 
 Ce projet est open-source et disponible sous la licence MIT.
-
----
-
-Fait avec ❤️ et ☁️ pour votre prochain défilé ensoleillé !
