@@ -1,4 +1,4 @@
-# metry1
+# WeatherWise
 metry is an app that helps people plan outdoor activities by showing what the weather is likely to be at any place and time of the year.
 
 It doesn’t give a short-term forecast. Instead, it uses NASA’s historical weather data to tell users the chances of having very hot, cold, rainy, windy, or uncomfortable weather.
