@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,8 @@ import { AdminManager } from "./AdminManager";
 import { useAdmin } from "@/hooks/useAdmin";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { WeatherAIPrediction, type WeatherAIPredictionRef } from "./WeatherAIPrediction";
+import { Chatbot } from "./Chatbot";
 
 
 interface WeatherData {
@@ -51,6 +53,7 @@ export default function WeatherDashboard() {
   const [showAuth, setShowAuth] = useState(false);
   const { toast } = useToast();
   const { isAdmin } = useAdmin(user);
+  const aiPredictionRef = useRef<WeatherAIPredictionRef>(null);
 
   // Helper functions for date analysis
   const getDateType = (date: Date) => {
@@ -119,6 +122,7 @@ export default function WeatherDashboard() {
     }
 
     setLoading(true);
+    setWeatherData(null); // Reset previous data
     const dateType = getDateType(selectedDate);
     
     try {
@@ -143,6 +147,7 @@ export default function WeatherDashboard() {
 
       const data = await response.json();
       setWeatherData(data);
+      aiPredictionRef.current?.fetchAIRecommendation(location, selectedDate);
       
       const typeInfo = getDateTypeInfo(dateType);
       toast({
@@ -697,6 +702,7 @@ export default function WeatherDashboard() {
 
                 <TabsContent value="recommendations">
                   <div className="space-y-4">
+                    <WeatherAIPrediction ref={aiPredictionRef} />
                     <Card>
                       <CardHeader>
                         <CardTitle>Activity Recommendations</CardTitle>
@@ -802,6 +808,7 @@ export default function WeatherDashboard() {
       </div>
       
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+      <Chatbot />
     </div>
   );
 }
