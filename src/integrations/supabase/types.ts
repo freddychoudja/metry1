@@ -7,14 +7,104 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          id: string
+          email: string | null
+          full_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          email?: string | null
+          full_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string | null
+          full_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      saved_locations: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          latitude: number
+          longitude: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          name: string
+          latitude: number
+          longitude: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          name?: string
+          latitude?: number
+          longitude?: number
+          created_at?: string
+        }
+      }
+      weather_cache: {
+        Row: {
+          id: string
+          latitude: number
+          longitude: number
+          month: number
+          day: number
+          avg_temperature: number | null
+          avg_humidity: number | null
+          avg_rainfall: number | null
+          avg_wind_speed: number | null
+          extreme_heat_probability: number | null
+          heavy_rain_probability: number | null
+          data_source: string | null
+          cached_at: string
+        }
+        Insert: {
+          id?: string
+          latitude: number
+          longitude: number
+          month: number
+          day: number
+          avg_temperature?: number | null
+          avg_humidity?: number | null
+          avg_rainfall?: number | null
+          avg_wind_speed?: number | null
+          extreme_heat_probability?: number | null
+          heavy_rain_probability?: number | null
+          data_source?: string | null
+          cached_at?: string
+        }
+        Update: {
+          id?: string
+          latitude?: number
+          longitude?: number
+          month?: number
+          day?: number
+          avg_temperature?: number | null
+          avg_humidity?: number | null
+          avg_rainfall?: number | null
+          avg_wind_speed?: number | null
+          extreme_heat_probability?: number | null
+          heavy_rain_probability?: number | null
+          data_source?: string | null
+          cached_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
