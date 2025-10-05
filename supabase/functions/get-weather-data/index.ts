@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,21 +7,47 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-// Get real weather data from Open-Meteo API (free, no API key required)
+// Get weather data from OpenWeatherMap API
+async function getWeatherFromOpenWeatherMap(
+  lat: number,
+  lon: number
+) {
+  const apiKey = Deno.env.get('OPENWEATHER_API_KEY')
+  if (!apiKey) throw new Error('OpenWeatherMap API key not configured')
+  
+  try {
+    console.log('Fetching weather from OpenWeatherMap API')
+    const endpoint = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+    const response = await fetch(endpoint)
+    
+    if (!response.ok) throw new Error(`OpenWeatherMap API error: ${response.status}`)
+    
+    const data = await response.json()
+    return {
+      temperature: data.main.temp,
+      humidity: data.main.humidity,
+      rainfall: data.rain?.['1h'] || 0,
+      windSpeed: data.wind.speed,
+      dataPoints: 1,
+      source: 'OpenWeatherMap API'
+    }
+  } catch (error) {
+    console.warn('OpenWeatherMap API failed:', error)
+    throw error
+  }
+}
+
+// Fallback to Open-Meteo API (free, no API key required)
 async function getWeatherFromOpenMeteo(
   lat: number,
   lon: number
 ) {
   try {
-    console.log('Fetching current weather from Open-Meteo API')
-    
+    console.log('Fetching weather from Open-Meteo API (fallback)')
     const endpoint = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m&timezone=auto`
-    
     const response = await fetch(endpoint)
     
-    if (!response.ok) {
-      throw new Error(`Open-Meteo API error: ${response.status}`)
-    }
+    if (!response.ok) throw new Error(`Open-Meteo API error: ${response.status}`)
     
     const data = await response.json()
     const current = data.current
@@ -31,7 +58,7 @@ async function getWeatherFromOpenMeteo(
       rainfall: current.precipitation || 0,
       windSpeed: current.wind_speed_10m,
       dataPoints: 1,
-      source: 'Open-Meteo Weather API (Free & Open Source)'
+      source: 'Open-Meteo API (Fallback)'
     }
   } catch (error) {
     console.warn('Open-Meteo API failed:', error)
@@ -39,145 +66,68 @@ async function getWeatherFromOpenMeteo(
   }
 }
 
-// Get historical weather data from Meteomatics API with fallback
-async function getHistoricalWeatherData(
+// Get weather data with OpenWeatherMap primary, Open-Meteo fallback
+async function getWeatherData(
   lat: number, 
-  lon: number, 
-  month: number, 
-  day: number
+  lon: number
 ) {
-  const username = Deno.env.get('METEOMATICS_USERNAME')
-  const password = Deno.env.get('METEOMATICS_PASSWORD')
-
-  // Try Meteomatics first if credentials are available
-  if (username && password) {
-    try {
-      console.log('Attempting Meteomatics API call...')
-      
-      const dateStr = `2023-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T12:00:00Z`
-      const parameters = ['t_2m:C', 'relative_humidity_2m:p', 'precip_1h:mm', 'wind_speed_10m:ms']
-      const paramString = parameters.join(',')
-      
-      const endpoint = `https://api.meteomatics.com/${dateStr}/${paramString}/${lat},${lon}/json`
-      
-      console.log(`Meteomatics endpoint: ${endpoint}`)
-      
-      const response = await fetch(endpoint, {
-        headers: {
-          'Authorization': 'Basic ' + btoa(`${username}:${password}`)
-        }
-      })
-
-      console.log(`Meteomatics response status: ${response.status}`)
-      
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Meteomatics data received successfully')
-        return {
-          source: 'Meteomatics Professional API',
-          data: [data]
-        }
-      } else {
-        const errorText = await response.text()
-        console.warn(`Meteomatics API error: ${response.status} - ${errorText}`)
-      }
-    } catch (error) {
-      console.warn('Meteomatics API failed:', error)
-    }
-  }
-  
-  // Fallback to Open-Meteo current weather
+  // Try OpenWeatherMap first
   try {
-    console.log('Falling back to Open-Meteo current weather')
-    const fallbackData = await getWeatherFromOpenMeteo(lat, lon)
+    const data = await getWeatherFromOpenWeatherMap(lat, lon)
     return {
-      source: fallbackData.source,
-      data: fallbackData
+      source: data.source,
+      data: {
+        temperature: data.temperature,
+        humidity: data.humidity,
+        rainfall: data.rainfall,
+        windSpeed: data.windSpeed,
+        dataPoints: data.dataPoints
+      }
     }
   } catch (error) {
-    console.warn('All weather APIs failed:', error.message)
-    throw new Error(`Weather APIs unavailable: ${error.message}. Open-Meteo and Meteomatics both failed.`)
+    console.warn('OpenWeatherMap failed, trying Open-Meteo:', error)
+  }
+  
+  // Fallback to Open-Meteo
+  try {
+    const data = await getWeatherFromOpenMeteo(lat, lon)
+    return {
+      source: data.source,
+      data: {
+        temperature: data.temperature,
+        humidity: data.humidity,
+        rainfall: data.rainfall,
+        windSpeed: data.windSpeed,
+        dataPoints: data.dataPoints
+      }
+    }
+  } catch (error) {
+    console.warn('All weather APIs failed:', error)
+    throw new Error('Weather APIs unavailable. Both OpenWeatherMap and Open-Meteo failed.')
   }
 }
 
-// Process weather data from any source
+// Process weather data
 function processWeatherData(result: any) {
-  if (result.data && Array.isArray(result.data) && result.data[0]?.data) {
-    // Meteomatics format
-    const temperatures = []
-    const humidity = []
-    const rainfall = []
-    const windSpeed = []
-
-    for (const yearData of result.data) {
-      if (yearData.data) {
-        for (const param of yearData.data) {
-          const value = param.coordinates?.[0]?.dates?.[0]?.value
-          if (value !== null && value !== undefined) {
-            switch (param.parameter) {
-              case 't_2m:C':
-                temperatures.push(value)
-                break
-              case 'relative_humidity_2m:p':
-                humidity.push(value)
-                break
-              case 'precip_1h:mm':
-                rainfall.push(value)
-                break
-              case 'wind_speed_10m:ms':
-                windSpeed.push(value)
-                break
-            }
-          }
-        }
-      }
-    }
-
-    if (temperatures.length === 0) {
-      throw new Error('No valid temperature data received from Meteomatics API')
-    }
-    
-    return {
-      temperature: {
-        avg: temperatures.reduce((a, b) => a + b, 0) / temperatures.length,
-        min: Math.min(...temperatures),
-        max: Math.max(...temperatures),
-        extremeHeatProb: (temperatures.filter(temp => temp > 35).length / temperatures.length) * 100
-      },
-      humidity: {
-        avg: humidity.length > 0 ? humidity.reduce((a, b) => a + b, 0) / humidity.length : 0
-      },
-      rainfall: {
-        avg: rainfall.length > 0 ? rainfall.reduce((a, b) => a + b, 0) / rainfall.length : 0,
-        heavyRainProb: rainfall.length > 0 ? (rainfall.filter(rain => rain > 10).length / rainfall.length) * 100 : 0
-      },
-      windSpeed: {
-        avg: windSpeed.length > 0 ? windSpeed.reduce((a, b) => a + b, 0) / windSpeed.length : 0
-      },
-      dataPoints: temperatures.length
-    }
-  } else {
-    // Fallback format
-    const data = result.data
-    return {
-      temperature: {
-        avg: data.temperature,
-        min: data.temperature - 2,
-        max: data.temperature + 2,
-        extremeHeatProb: data.temperature > 35 ? 80 : data.temperature > 30 ? 40 : 0
-      },
-      humidity: {
-        avg: data.humidity
-      },
-      rainfall: {
-        avg: data.rainfall,
-        heavyRainProb: data.rainfall > 10 ? 60 : data.rainfall > 5 ? 30 : 5
-      },
-      windSpeed: {
-        avg: data.windSpeed
-      },
-      dataPoints: data.dataPoints
-    }
+  const data = result.data
+  return {
+    temperature: {
+      avg: data.temperature,
+      min: data.temperature - 2,
+      max: data.temperature + 2,
+      extremeHeatProb: data.temperature > 35 ? 80 : data.temperature > 30 ? 40 : 0
+    },
+    humidity: {
+      avg: data.humidity
+    },
+    rainfall: {
+      avg: data.rainfall,
+      heavyRainProb: data.rainfall > 10 ? 60 : data.rainfall > 5 ? 30 : 5
+    },
+    windSpeed: {
+      avg: data.windSpeed
+    },
+    dataPoints: data.dataPoints
   }
 }
 
@@ -190,8 +140,18 @@ serve(async (req) => {
     })
   }
 
+  let body
   try {
-    const { latitude, longitude, month, day } = await req.json()
+    body = await req.json()
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid or missing JSON body' }), {
+      status: 400,
+      headers: corsHeaders
+    })
+  }
+  
+  try {
+    const { latitude, longitude, month, day, dateType } = body
 
     // Validate input parameters
     if (!latitude || !longitude || !month || !day) {
@@ -214,35 +174,44 @@ serve(async (req) => {
       throw new Error('Invalid day: must be between 1 and 31')
     }
 
-    console.log('Fetching weather data for:', { latitude, longitude, month, day })
+    console.log(`[Weather API] ${latitude},${longitude} -> weather data`)
     
     // Get weather data with fallback
-    const weatherResult = await getHistoricalWeatherData(latitude, longitude, month, day)
+    const weatherResult = await getWeatherData(latitude, longitude)
     const processedData = processWeatherData(weatherResult)
 
-    // Format result for backward compatibility
+    // Validate data reasonableness
+    const temp = Math.round(processedData.temperature.avg * 10) / 10;
+    const humidity = Math.round(processedData.humidity.avg * 10) / 10;
+    
+    // Basic sanity checks
+    if (temp < -60 || temp > 60) {
+      console.warn(`Suspicious temperature: ${temp}°C for ${latitude},${longitude}`);
+    }
+    if (humidity < 0 || humidity > 100) {
+      console.warn(`Invalid humidity: ${humidity}% for ${latitude},${longitude}`);
+    }
+    
+    // Format result with validation info
     const result = {
-      latitude,
-      longitude,
+      latitude: Math.round(latitude * 10000) / 10000, // Ensure precision
+      longitude: Math.round(longitude * 10000) / 10000,
       month,
       day,
-      avg_temperature: Math.round(processedData.temperature.avg * 10) / 10,
-      avg_humidity: Math.round(processedData.humidity.avg * 10) / 10,
+      date_type: dateType || 'current',
+      avg_temperature: temp,
+      avg_humidity: humidity,
       avg_rainfall: Math.round(processedData.rainfall.avg * 10) / 10,
       avg_wind_speed: Math.round(processedData.windSpeed.avg * 10) / 10,
       extreme_heat_probability: Math.round(processedData.temperature.extremeHeatProb * 10) / 10,
       heavy_rain_probability: Math.round(processedData.rainfall.heavyRainProb * 10) / 10,
-      // Enhanced data
-      temperature_range: {
-        min: Math.round(processedData.temperature.min * 10) / 10,
-        max: Math.round(processedData.temperature.max * 10) / 10
-      },
-      data_points: processedData.dataPoints,
       data_source: weatherResult.source,
-      api_version: "v1.0"
+      coordinates_verified: true,
+      api_endpoint_used: weatherResult.source.includes('OpenWeatherMap') ? 'openweathermap' : 'open-meteo',
+      timestamp: new Date().toISOString()
     }
 
-    console.log('Successfully processed Meteomatics weather data:', result)
+    console.log(`[Weather API] ${latitude},${longitude} -> source: ${result.data_source}`)
 
     return new Response(
       JSON.stringify(result),
@@ -255,7 +224,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Meteomatics Weather API Error:', error)
+    console.error('Weather API Error:', error)
     
     const errorResponse = {
       error: error.message,

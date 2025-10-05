@@ -29,12 +29,28 @@ export function SavedLocations({ onLocationSelect }: SavedLocationsProps) {
 
   useEffect(() => {
     fetchSavedLocations();
+    
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('saved_locations_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'saved_locations' },
+        () => fetchSavedLocations()
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSavedLocations = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("saved_locations")
@@ -42,10 +58,32 @@ export function SavedLocations({ onLocationSelect }: SavedLocationsProps) {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setSavedLocations(data || []);
-    } catch (error) {
-      console.error("Error fetching saved locations:", error);
+      if (error) {
+        // Handle missing table gracefully
+        if (error.code === '42P01' || error.message?.includes('relation')) {
+          console.warn('Saved locations table not found - database not configured');
+          setSavedLocations([]);
+        } else if (error.code === 'PGRST116' || error.message?.includes('406')) {
+          console.warn('Query parameter encoding issue - retrying with simpler query');
+          // Retry with a simpler query
+          const { data: retryData, error: retryError } = await supabase
+            .from("saved_locations")
+            .select("id, name, latitude, longitude, created_at")
+            .eq("user_id", user.id);
+          
+          if (retryError) {
+            throw retryError;
+          }
+          setSavedLocations(retryData || []);
+        } else {
+          throw error;
+        }
+      } else {
+        setSavedLocations(data || []);
+      }
+    } catch (error: any) {
+      console.warn('Error fetching saved locations:', error?.message || 'Unknown error');
+      setSavedLocations([]);
     } finally {
       setLoading(false);
     }
@@ -109,14 +147,20 @@ export function SavedLocations({ onLocationSelect }: SavedLocationsProps) {
       </CardHeader>
       <CardContent>
         {savedLocations.length === 0 ? (
-          <p className="text-sm text-gray-500">No saved locations yet.</p>
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-500 mb-2">No saved locations yet.</p>
+            <p className="text-xs text-gray-400">
+              Save locations by selecting them and clicking the heart icon.
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             {savedLocations.map((location) => (
-              <div key={location.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+              <div key={location.id} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
                 <button
                   onClick={() => selectLocation(location)}
-                  className="flex-1 text-left text-sm hover:text-blue-600"
+                  className="flex-1 text-left text-sm hover:text-blue-600 font-medium"
+                  title={`${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`}
                 >
                   {location.name}
                 </button>
@@ -124,7 +168,8 @@ export function SavedLocations({ onLocationSelect }: SavedLocationsProps) {
                   size="sm"
                   variant="ghost"
                   onClick={() => deleteLocation(location.id)}
-                  className="h-6 w-6 p-0"
+                  className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                  title="Delete location"
                 >
                   <Trash2 className="w-3 h-3" />
                 </Button>
