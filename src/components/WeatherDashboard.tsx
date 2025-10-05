@@ -617,9 +617,25 @@ export default function WeatherDashboard() {
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">
           {activeView === 'events' ? (
-            <EventPlannerView user={user} />
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <Button variant="outline" onClick={() => setActiveView('weather')}>
+                  ← Back to Dashboard
+                </Button>
+                <h1 className="text-2xl font-bold">Event Planner</h1>
+              </div>
+              <EventPlannerView user={user} />
+            </div>
           ) : activeView === 'travel' ? (
-            <TravelPlannerView user={user} />
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <Button variant="outline" onClick={() => setActiveView('weather')}>
+                  ← Back to Dashboard
+                </Button>
+                <h1 className="text-2xl font-bold">Travel Planner</h1>
+              </div>
+              <TravelPlannerView user={user} />
+            </div>
           ) : (
             <>
               {!user && (
