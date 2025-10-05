@@ -1,7 +1,7 @@
-import NasaWeatherDashboard from "@/components/NasaWeatherDashboard";
+import WeatherDashboard from "@/components/WeatherDashboard";
 
 const Index = () => {
-  return <NasaWeatherDashboard />;
+  return <WeatherDashboard />;
 };
 
 export default Index;

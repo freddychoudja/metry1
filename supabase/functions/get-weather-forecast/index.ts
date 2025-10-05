@@ -16,26 +16,66 @@ serve(async (req) => {
     
     console.log(`Fetching weather for lat: ${latitude}, lon: ${longitude}, date: ${date}`);
 
-    // Call Open-Meteo API for weather data
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=auto&start_date=${date}&end_date=${date}`;
+    // Get Meteomatics credentials
+    const username = Deno.env.get('METEOMATICS_USERNAME');
+    const password = Deno.env.get('METEOMATICS_PASSWORD');
+
+    if (!username || !password) {
+      throw new Error('Meteomatics credentials not found in environment variables');
+    }
+
+    // Call Meteomatics API for weather forecast
+    const parameters = ['t_2m:C', 't_min_2m_24h:C', 't_max_2m_24h:C', 'prob_precip_1h:p', 'wind_speed_10m:ms'];
+    const paramString = parameters.join(',');
+    const weatherUrl = `https://api.meteomatics.com/${date}T12:00:00Z/${paramString}/${latitude},${longitude}/json`;
     
-    const weatherResponse = await fetch(weatherUrl);
+    const weatherResponse = await fetch(weatherUrl, {
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+      }
+    });
     
     if (!weatherResponse.ok) {
-      throw new Error(`Open-Meteo API error: ${weatherResponse.status}`);
+      throw new Error(`Meteomatics API error: ${weatherResponse.status}`);
     }
     
     const weatherData = await weatherResponse.json();
-    console.log('Weather data received:', JSON.stringify(weatherData));
+    console.log('Meteomatics weather data received:', JSON.stringify(weatherData));
 
-    // Extract weather metrics
-    const tempMax = weatherData.daily.temperature_2m_max[0];
-    const tempMin = weatherData.daily.temperature_2m_min[0];
-    const rainProbability = weatherData.daily.precipitation_probability_max[0];
-    const windSpeed = weatherData.daily.wind_speed_10m_max[0];
+    // Extract weather metrics from Meteomatics response
+    let avgTemp = 20, tempMin = 15, tempMax = 25, rainProbability = 20, windSpeed = 10;
+    
+    if (weatherData.data) {
+      for (const param of weatherData.data) {
+        const value = param.coordinates?.[0]?.dates?.[0]?.value;
+        if (value !== null && value !== undefined) {
+          switch (param.parameter) {
+            case 't_2m:C':
+              avgTemp = value;
+              break;
+            case 't_min_2m_24h:C':
+              tempMin = value;
+              break;
+            case 't_max_2m_24h:C':
+              tempMax = value;
+              break;
+            case 'prob_precip_1h:p':
+              rainProbability = value;
+              break;
+            case 'wind_speed_10m:ms':
+              windSpeed = value * 3.6; // Convert m/s to km/h
+              break;
+          }
+        }
+      }
+    }
 
-    // Calculate average temperature
-    const avgTemp = Math.round((tempMax + tempMin) / 2);
+    // Use the average temperature from Meteomatics or calculate if needed
+    if (avgTemp === 20 && tempMin !== 15 && tempMax !== 25) {
+      avgTemp = Math.round((tempMax + tempMin) / 2);
+    } else {
+      avgTemp = Math.round(avgTemp);
+    }
 
     // Determine wind strength
     let windStrength = 'faible';

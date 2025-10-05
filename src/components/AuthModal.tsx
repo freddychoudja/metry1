@@ -79,7 +79,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
       } else {
         toast({
           title: "Account created!",
-          description: "Welcome to NASA Weather Explorer.",
+          description: "Welcome to WeatherWise Explorer.",
         });
       }
       onClose();
@@ -152,7 +152,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign in to NASA Weather Explorer</DialogTitle>
+          <DialogTitle>Sign in to WeatherWise Explorer</DialogTitle>
           <DialogDescription>
             Access your personal dashboard to save locations and export weather data.
           </DialogDescription>

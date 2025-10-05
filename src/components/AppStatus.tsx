@@ -13,7 +13,7 @@ export function AppStatus() {
   const [statuses, setStatuses] = useState<StatusItem[]>([
     { name: "Frontend", status: "checking", description: "React application" },
     { name: "Supabase", status: "checking", description: "Database connection" },
-    { name: "NASA API", status: "checking", description: "Historical weather data" },
+    { name: "Meteomatics API", status: "checking", description: "Professional weather data" },
   ]);
 
   useEffect(() => {
@@ -51,11 +51,11 @@ export function AppStatus() {
         ));
       }
 
-      // Check NASA API endpoint
+      // Check Meteomatics API endpoint
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         if (supabaseUrl) {
-          const response = await fetch(`${supabaseUrl}/functions/v1/get-nasa-weather`, {
+          const response = await fetch(`${supabaseUrl}/functions/v1/get-weather-data`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -70,19 +70,19 @@ export function AppStatus() {
           });
           
           setStatuses(prev => prev.map(item => 
-            item.name === "NASA API" ? { 
+            item.name === "Meteomatics API" ? { 
               ...item, 
               status: response.status !== 404 ? "online" as const : "offline" as const 
             } : item
           ));
         } else {
           setStatuses(prev => prev.map(item => 
-            item.name === "NASA API" ? { ...item, status: "offline" as const } : item
+            item.name === "Meteomatics API" ? { ...item, status: "offline" as const } : item
           ));
         }
       } catch {
         setStatuses(prev => prev.map(item => 
-          item.name === "NASA API" ? { ...item, status: "offline" as const } : item
+          item.name === "Meteomatics API" ? { ...item, status: "offline" as const } : item
         ));
       }
     };
@@ -146,7 +146,7 @@ export function AppStatus() {
         <div className="mt-4 p-3 bg-blue-50 rounded-lg">
           <p className="text-xs text-blue-700">
             <strong>App Version:</strong> 1.0.0<br />
-            <strong>Data Source:</strong> NASA POWER API<br />
+            <strong>Data Source:</strong> Meteomatics API<br />
             <strong>Last Updated:</strong> {new Date().toLocaleString()}
           </p>
         </div>

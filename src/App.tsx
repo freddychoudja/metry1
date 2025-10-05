@@ -1,10 +1,10 @@
-import NasaWeatherDashboard from "./components/NasaWeatherDashboard";
+import WeatherDashboard from "./components/WeatherDashboard";
 import { Toaster } from "@/components/ui/toaster";
 
 function App() {
   return (
     <>
-      <NasaWeatherDashboard />
+      <WeatherDashboard />
       <Toaster />
     </>
   );

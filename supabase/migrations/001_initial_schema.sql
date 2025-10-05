@@ -17,7 +17,7 @@ CREATE TABLE saved_locations (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create weather_cache table for NASA data
+-- Create weather_cache table for weather data
 CREATE TABLE weather_cache (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   latitude DECIMAL(10, 8) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE weather_cache (
   avg_wind_speed DECIMAL(5, 2),
   extreme_heat_probability DECIMAL(5, 2),
   heavy_rain_probability DECIMAL(5, 2),
-  data_source TEXT DEFAULT 'NASA_POWER',
+  data_source TEXT DEFAULT 'METEOMATICS',
   cached_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(latitude, longitude, month, day)
 );

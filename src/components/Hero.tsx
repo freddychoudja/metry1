@@ -20,7 +20,7 @@ const Hero = () => {
       <div className="relative z-10 container mx-auto px-4 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm text-white mb-6 animate-pulse-glow">
           <TrendingUp className="w-4 h-4" />
-          <span className="text-sm font-medium">Powered by NASA Data</span>
+          <span className="text-sm font-medium">Powered by Meteomatics</span>
         </div>
         
         <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 drop-shadow-lg">
@@ -43,7 +43,7 @@ const Hero = () => {
           </div>
           <div className="flex items-center gap-2">
             <Cloud className="w-5 h-5" />
-            <span>API NASA officielles</span>
+            <span>API Meteomatics professionnelle</span>
           </div>
         </div>
       </div>

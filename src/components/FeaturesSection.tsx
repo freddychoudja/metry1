@@ -25,8 +25,8 @@ const FeaturesSection = () => {
     },
     {
       icon: Shield,
-      title: "Sources officielles NASA",
-      description: "POWER, GPM, MERRA-2, MODIS - données scientifiques fiables",
+      title: "Sources professionnelles Meteomatics",
+      description: "API météorologique professionnelle - données scientifiques fiables",
     },
     {
       icon: Download,

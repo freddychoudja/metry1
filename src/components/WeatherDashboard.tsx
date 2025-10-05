@@ -38,7 +38,7 @@ interface Location {
   name?: string;
 }
 
-export default function NasaWeatherDashboard() {
+export default function WeatherDashboard() {
   const [location, setLocation] = useState<Location | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedDay, setSelectedDay] = useState<number>(new Date().getDate());
@@ -73,7 +73,7 @@ export default function NasaWeatherDashboard() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-nasa-weather`, {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-weather-data`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -203,7 +203,7 @@ export default function NasaWeatherDashboard() {
                   🌍 Welcome to WeatherWise Explorer
                 </h2>
                 <p className="text-blue-700 text-sm">
-                  Explore historical weather patterns from NASA satellite data. 
+                  Explore historical weather patterns from professional Meteomatics weather data. 
                   <strong>Sign in to save locations and unlock premium features!</strong>
                 </p>
               </div>
@@ -540,7 +540,7 @@ export default function NasaWeatherDashboard() {
                   <MapPin className="w-12 h-12 text-gray-400 mb-4" />
                   <p className="text-gray-500 text-center">Select a location and date to view weather data</p>
                   <p className="text-sm text-gray-400 text-center mt-2">
-                    Historical weather patterns from NASA satellite data
+                    Historical weather patterns from Meteomatics professional weather data
                   </p>
                 </CardContent>
               </Card>

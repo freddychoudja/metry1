@@ -75,7 +75,7 @@ const SearchSection = () => {
 
         {/* Quick info */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>💡 Les données proviennent des API NASA POWER, GPM, MERRA-2 et MODIS</p>
+          <p>💡 Les données proviennent de l'API météorologique professionnelle Meteomatics</p>
         </div>
       </div>
     </section>

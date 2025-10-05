@@ -1,11 +1,12 @@
 # WeatherWise Explorer 🛰️
 
-A modern web application that helps users explore historical weather patterns and plan outdoor activities using NASA's climate data.
+A modern web application that helps users explore historical weather patterns and plan outdoor activities using real-time and historical weather data from Meteomatics API.
 
 ## Features
 
 - **Location Search**: Search for any location worldwide using OpenStreetMap's Nominatim API
-- **Historical Weather Data**: Access NASA POWER API data from 2000-2023
+- **Real-time Weather Data**: Access current weather conditions via Meteomatics API
+- **Historical Weather Data**: Historical weather patterns for better planning
 - **Weather Metrics**: View temperature, humidity, rainfall, and wind speed averages
 - **Risk Assessment**: Get probabilities for extreme weather conditions
 - **Activity Recommendations**: Smart suggestions based on weather patterns
@@ -25,7 +26,7 @@ A modern web application that helps users explore historical weather patterns an
 ### Backend
 - **Supabase** for database, authentication, and edge functions
 - **PostgreSQL** database with Row Level Security
-- **NASA POWER API** for weather data
+- **Meteomatics API** for real-time and historical weather data
 
 ### Development
 - **Vite** for fast development and building
@@ -142,17 +143,18 @@ Manages user's favorite locations:
 
 ## API Integration
 
-### NASA POWER API
-The application uses NASA's POWER (Prediction Of Worldwide Energy Resources) API:
-- **Endpoint**: `https://power.larc.nasa.gov/api/temporal/daily/point`
-- **Parameters**: Temperature (T2M), Humidity (RH2M), Precipitation (PRECTOTCORR), Wind Speed (WS2M)
-- **Data Range**: 2000-2023
-- **Processing**: Historical averages and extreme weather probabilities
+### Meteomatics API
+The application uses Meteomatics professional weather API:
+- **Endpoint**: `https://api.meteomatics.com/`
+- **Parameters**: Temperature (t_2m:C), Humidity (relative_humidity_2m:p), Precipitation (precip_1h:mm), Wind Speed (wind_speed_10m:ms)
+- **Data**: Real-time and historical weather data
+- **Processing**: Current conditions and historical averages for planning
 
 ### Edge Function
-The `get-nasa-weather` edge function:
-- Fetches data from NASA POWER API
-- Processes historical data for specific dates
+The weather edge functions:
+- `get-nasa-weather`: Fetches historical data from Meteomatics API
+- `get-weather-forecast`: Provides real-time weather forecasts
+- Processes weather data for specific dates and locations
 - Calculates averages and probabilities
 - Returns formatted weather data
 
@@ -207,7 +209,7 @@ This project is licensed under the MIT License.
 
 ## Acknowledgments
 
-- **NASA POWER API** for providing comprehensive weather data
+- **Meteomatics API** for providing professional weather data
 - **Supabase** for backend infrastructure
 - **OpenStreetMap** for location search capabilities
 - **Shadcn/ui** for beautiful UI components
