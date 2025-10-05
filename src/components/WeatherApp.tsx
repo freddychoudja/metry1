@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,11 +26,7 @@ export default function WeatherApp() {
   const [gettingLocation, setGettingLocation] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    getLocation();
-  }, []);
-
-  const getLocation = () => {
+  const getLocation = useCallback(() => {
     setGettingLocation(true);
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -63,7 +59,11 @@ export default function WeatherApp() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    getLocation();
+  }, [getLocation]);
 
   const getForecast = async () => {
     if (!location) {

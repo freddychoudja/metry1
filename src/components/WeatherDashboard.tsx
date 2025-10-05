@@ -204,7 +204,7 @@ export default function WeatherDashboard() {
     
     let baseCondition = "";
     let bgColor = "";
-    let textColor = "text-white";
+    const textColor = "text-white";
     
     // Determine base weather condition
     if (avg_temperature >= 32 || extreme_heat_probability > 15) {
