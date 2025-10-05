@@ -28,6 +28,12 @@ const COLORS = {
   rain: "#2563eb"
 };
 
+type MetricTooltipProps = {
+  payload: {
+    unit: string;
+  };
+};
+
 export function WeatherChart({ data }: WeatherChartProps) {
   if (!data || data.length === 0) {
     return (
@@ -64,8 +70,8 @@ export function WeatherChart({ data }: WeatherChartProps) {
               <XAxis dataKey="name" fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip 
-                formatter={(value: number, name: string, props: any) => [
-                  `${value.toFixed(1)} ${props.payload.unit}`, 
+                formatter={(value: number, name: string, props: MetricTooltipProps) => [
+                  `${value.toFixed(1)} ${props.payload.unit}`,
                   name
                 ]}
                 labelStyle={{ color: '#374151' }}

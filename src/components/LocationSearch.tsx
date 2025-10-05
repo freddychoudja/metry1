@@ -13,9 +13,15 @@ interface LocationSearchProps {
   onLocationSelect: (location: Location) => void;
 }
 
+interface NominatimSuggestion {
+  lat: string;
+  lon: string;
+  display_name: string;
+}
+
 export function LocationSearch({ onLocationSelect }: LocationSearchProps) {
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -77,7 +83,7 @@ export function LocationSearch({ onLocationSelect }: LocationSearchProps) {
     searchLocations(value);
   };
 
-  const selectLocation = (suggestion: any) => {
+  const selectLocation = (suggestion: NominatimSuggestion) => {
     const location: Location = {
       lat: parseFloat(suggestion.lat),
       lng: parseFloat(suggestion.lon),

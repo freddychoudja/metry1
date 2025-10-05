@@ -83,11 +83,15 @@ export function AuthModal({ onClose }: AuthModalProps) {
         });
       }
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign up error:', error);
+      let description = "Failed to create account. Please check your Supabase configuration.";
+      if (error instanceof Error) {
+        description = error.message;
+      }
       toast({
         title: "Sign Up Error",
-        description: error.message || "Failed to create account. Please check your Supabase configuration.",
+        description,
         variant: "destructive",
       });
     } finally {
@@ -136,11 +140,15 @@ export function AuthModal({ onClose }: AuthModalProps) {
         description: "You've been signed in successfully.",
       });
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Sign in error:', error);
+      let description = "Authentication failed. Please check your Supabase configuration.";
+      if (error instanceof Error) {
+        description = error.message;
+      }
       toast({
         title: "Sign In Error",
-        description: error.message || "Authentication failed. Please check your Supabase configuration.",
+        description,
         variant: "destructive",
       });
     } finally {
