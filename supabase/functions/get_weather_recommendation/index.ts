@@ -1,51 +1,42 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import MeteomaticsClient from "./meteomatics_client.ts";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': '*', 
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { latitude, longitude, date } = await req.json();
-    
-    console.log(`Fetching weather for lat: ${latitude}, lon: ${longitude}, date: ${date}`);
+    console.log(`Fetching weather recommendation for lat: ${latitude}, lon: ${longitude}, date: ${date}`);
 
-    // Call Open-Meteo API for weather data
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=auto&start_date=${date}&end_date=${date}`;
-    
-    const weatherResponse = await fetch(weatherUrl);
-    
-    if (!weatherResponse.ok) {
-      throw new Error(`Open-Meteo API error: ${weatherResponse.status}`);
+    // Initialize Meteomatics Client
+    const meteomaticsToken = Deno.env.get('METEOMATICS_ACCESS_TOKEN');
+
+    if (!meteomaticsToken) {
+      throw new Error('Meteomatics access token not configured');
     }
-    
-    const weatherData = await weatherResponse.json();
-    console.log('Weather data received:', JSON.stringify(weatherData));
 
-    // Extract weather metrics
-    const tempMax = weatherData.daily.temperature_2m_max[0];
-    const tempMin = weatherData.daily.temperature_2m_min[0];
-    const rainProbability = weatherData.daily.precipitation_probability_max[0];
-    const windSpeed = weatherData.daily.wind_speed_10m_max[0];
+    const meteoClient = new MeteomaticsClient({
+      token: meteomaticsToken,
+    });
 
-    // Calculate average temperature
-    const avgTemp = Math.round((tempMax + tempMin) / 2);
+    // Fetch weather data from Meteomatics
+    const weatherData = await meteoClient.getDailyForecast(latitude, longitude, date);
+    console.log('Meteomatics data received:', JSON.stringify(weatherData));
 
     // Determine wind strength
-    let windStrength = 'faible';
-    if (windSpeed > 30) windStrength = 'fort';
-    else if (windSpeed > 15) windStrength = 'moyen';
+    const windStrength = MeteomaticsClient.getWindCategory(weatherData.wind_speed);
 
     // Build weather description for AI
-    const weatherDescription = `Température moyenne: ${avgTemp}°C (min: ${tempMin}°C, max: ${tempMax}°C), Probabilité de pluie: ${rainProbability}%, Vent: ${windStrength} (${windSpeed} km/h)`;
-
-    console.log('Weather description:', weatherDescription);
+    const weatherDescription = `Température: ${weatherData.temperature}°C, Précipitations sur 24h: ${weatherData.rain_24h}mm, Humidité: ${weatherData.humidity}%, Vent: ${windStrength} (${weatherData.wind_speed} m/s)`;
+    console.log('Weather description for AI:', weatherDescription);
 
     // Call Lovable AI to generate recommendation
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
@@ -80,19 +71,31 @@ serve(async (req) => {
       throw new Error(`Lovable AI error: ${aiResponse.status}`);
     }
 
-    const aiData = await aiResponse.json();
-    const recommendation = aiData.choices[0].message.content;
+    // Define types for the AI service response
+    interface AIChoice {
+      index: number;
+      message: {
+        role: string;
+        content: string;
+      };
+      finish_reason: string;
+    }
+    interface AIResponse {
+      id: string;
+      object: string;
+      created: number;
+      model: string;
+      choices: AIChoice[];
+    }
 
+    const aiData: AIResponse = await aiResponse.json();
+    const recommendation = aiData.choices[0].message.content;
     console.log('AI recommendation:', recommendation);
 
-    // Return complete forecast
+    // Return complete forecast and recommendation
     return new Response(
       JSON.stringify({
-        temperature: avgTemp,
-        temperatureMin: tempMin,
-        temperatureMax: tempMax,
-        rainProbability,
-        windSpeed,
+        ...weatherData,
         windStrength,
         recommendation,
       }),
@@ -102,7 +105,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in get-weather-forecast:', error);
+    console.error('Error in get_weather_recommendation:', error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error occurred' 
