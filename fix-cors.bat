@@ -4,7 +4,7 @@ echo.
 
 echo Step 1: Redeploying the function...
 supabase functions deploy get-weather-data --project-ref esszvyxcduucbtrqmokv
-
+supabase functions deploy proxy-nominatim --project-ref esszvyxcduucbtrqmokv
 echo.
 echo Step 2: Checking if Meteomatics credentials are set...
 supabase secrets list --project-ref esszvyxcduucbtrqmokv

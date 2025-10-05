@@ -33,8 +33,14 @@ export function LocationSearch({ onLocationSelect }: LocationSearchProps) {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`
-      );
+  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/proxy-nominatim?q=${encodeURIComponent(query)}`,
+  {
+    headers: {
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    },
+  }
+);
       const data = await response.json();
       setSuggestions(data);
     } catch (error) {
