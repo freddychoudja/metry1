@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai";
 import MeteomaticsClient from "./meteomatics_client.ts";
 
 const corsHeaders = {
@@ -10,7 +9,7 @@ const corsHeaders = {
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -39,22 +38,58 @@ serve(async (req: Request) => {
     const weatherDescription = `Température: ${weatherData.temperature}°C, Précipitations sur 24h: ${weatherData.rain_24h}mm, Humidité: ${weatherData.humidity}%, Vent: ${windStrength} (${weatherData.wind_speed} m/s)`;
     console.log('Weather description for AI:', weatherDescription);
 
-    // Call Gemini AI to generate recommendation
+    // Call Lovable AI to generate recommendation
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: 'Tu es un assistant météo sympathique. Ta mission est de donner une recommandation COURTE et CLAIRE (2-3 phrases maximum) sur la tenue d\'un événement en extérieur (défilé, parade, etc.) en fonction de la météo. Réponds en français avec un ton amical et rassurant. Commence toujours par "Oui" ou "Non" pour répondre à la question "Va-t-il pleuvoir ?", puis donne tes conseils pratiques.'
+          },
+          {
+            role: 'user',
+            content: `Voici la météo prévue : ${weatherDescription}. Peux-tu me dire si c'est une bonne idée d'organiser un défilé en extérieur ce jour-là ? Dois-je prévoir des parapluies ou un abri ?`
+          }
+        ],
+      }),
+    });
 
-    const prompt = `You are a friendly weather assistant. Your mission is to provide a SHORT and CLEAR recommendation (2-3 sentences max) about holding an outdoor event (like a parade, festival, etc.) based on the weather. Respond in English unless the user specifies another language. Always start with "Yes" or "No" to answer the question "Will it rain?", then give your practical advice.
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('Lovable AI error:', aiResponse.status, errorText);
+      throw new Error(`Lovable AI error: ${aiResponse.status}`);
+    }
 
-Here is the predicted weather: ${weatherDescription}. Is it a good idea to organize an outdoor parade on this day? Should I plan for umbrellas or shelter?`;
+    // Define types for the AI service response
+    interface AIChoice {
+      index: number;
+      message: {
+        role: string;
+        content: string;
+      };
+      finish_reason: string;
+    }
+    interface AIResponse {
+      id: string;
+      object: string;
+      created: number;
+      model: string;
+      choices: AIChoice[];
+    }
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const recommendation = response.text();
+    const aiData: AIResponse = await aiResponse.json();
+    const recommendation = aiData.choices[0].message.content;
     console.log('AI recommendation:', recommendation);
 
     // Return complete forecast and recommendation

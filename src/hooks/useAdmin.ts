@@ -19,13 +19,21 @@ export function useAdmin(user: User | null) {
           .from('profiles')
           .select('is_admin')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+        
         setIsAdmin(data?.is_admin || false);
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        setIsAdmin(false);
+      } catch (error: any) {
+        // Silently handle missing table or profile
+        if (error?.code === '42P01' || error?.message?.includes('relation') || error?.status === 406) {
+          setIsAdmin(false);
+        } else {
+          console.warn('Admin check failed:', error?.message || 'Unknown error');
+          setIsAdmin(false);
+        }
       } finally {
         setLoading(false);
       }

@@ -10,6 +10,7 @@ echo.
 echo Deploying functions...
 supabase functions deploy get-nasa-weather
 supabase functions deploy get-weather-forecast
+supabase functions deploy search-locations
 
 echo.
 echo Deployment complete! Your app now uses real Meteomatics weather data.
